@@ -1,0 +1,51 @@
+# 🚀 Ignore Environment Variables (Secrets)
+.env
+
+# 🚀 Ignore Python Bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 🚀 Ignore Logs and Debug Files
+*.log
+logs/
+
+# 🚀 Ignore Virtual Environment
+venv/
+env/
+.venv/
+
+# 🚀 Ignore System & IDE Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.iml
+
+# 🚀 Ignore Generated DDEX Batch Folders
+BATCH_*/
+
+# 🚀 Ignore Excel Files (If Not Needed in Git)
+*.xlsx
+
+# 🚀 Ignore FTP Upload Logs
+upload_log_*.txt
+
+# 🚀 Ignore Compiled Files
+*.so
+*.dll
+*.exe
+
+# 🚀 Ignore Kivy Cache
+*.kivycache
+.kv/
+
+# 🚀 Ignore Build & Distribution Folders
+dist/
+build/
+
+# 🚀 Ignore Kivy App Package Files
+*.spec
+*.apk
+*.aab
