@@ -38,7 +38,6 @@ XSI_NAMESPACE = 'http://www.w3.org/2001/XMLSchema-instance'
 
 
 def generate_grid():
-    """Generate a unique GRid dynamically"""
     return f"A1{random.randint(10000000, 99999999)}V"
 
 
@@ -47,7 +46,6 @@ def read_excel(file_path):
     df.columns = df.columns.str.lower().str.strip().str.replace(' ', '_')
 
     def clean_duration(value):
-        """Ensure the duration is treated as MM:SS, not HH:MM:SS."""
         value = str(value)
         parts = value.split(':')
         if len(parts) == 3:  # If mistakenly treated as HH:MM:SS, extract MM:SS
@@ -107,7 +105,6 @@ def format_duration(duration):
 
 
 def move_to_batch_folder(file_path, upc_code):
-    """Move a file to its corresponding UPC folder in the batch directory."""
     resource_folder = os.path.join(BATCH_FOLDER, upc_code)
     os.makedirs(resource_folder, exist_ok=True)
 
@@ -127,144 +124,145 @@ def generate_md5(file_path):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
 
-
 def create_ddex_xml(row, image_filename):
-  resource_folder = os.path.join(BATCH_FOLDER, row['upc_code'])
-  os.makedirs(resource_folder, exist_ok=True)
- 
+    resource_folder = os.path.join(BATCH_FOLDER, row['upc_code'])
+    os.makedirs(resource_folder, exist_ok=True)
 
-  # Create the root element with namespace
-  ernm = "{http://ddex.net/xml/ern/383}"
-  avs = "{http://ddex.net/xml/avs/avs}"
-  xsi = "{http://www.w3.org/2001/XMLSchema-instance}"
- 
+    ernm = "{http://ddex.net/xml/ern/383}"
+    avs = "{http://ddex.net/xml/avs/avs}"
+    xsi = "{http://www.w3.org/2001/XMLSchema-instance}"
 
-  NewReleaseMessage = etree.Element(f"{ernm}NewReleaseMessage",
-  attrib={
-  "LanguageAndScriptCode": "en",
-  "ReleaseProfileVersionId": "ClassicalAudioAlbum",
-  f"{xsi}schemaLocation": "http://ddex.net/xml/ern/383 http://ddex.net/xml/ern/383/release-notification.xsd",
-  "MessageSchemaVersionId": "ern/383"
-  },
-  nsmap={
-  "ernm": DDEX_ERN_NAMESPACE,
-  "avs": DDEX_AVS_NAMESPACE,
-  "xsi": XSI_NAMESPACE
-  }
-  )
- 
+    NewReleaseMessage = etree.Element(f"{ernm}NewReleaseMessage",
+                                        attrib={
+                                            "LanguageAndScriptCode": "en",
+                                            "ReleaseProfileVersionId": "ClassicalAudioAlbum",
+                                            f"{xsi}schemaLocation": "http://ddex.net/xml/ern/383 http://ddex.net/xml/ern/383/release-notification.xsd",
+                                            "MessageSchemaVersionId": "ern/383"
+                                        },
+                                        nsmap={
+                                            "ernm": DDEX_ERN_NAMESPACE,
+                                            "avs": DDEX_AVS_NAMESPACE,
+                                            "xsi": XSI_NAMESPACE
+                                        })
 
-  # MessageHeader
-  MessageHeader = etree.SubElement(NewReleaseMessage, "MessageHeader")
-  etree.SubElement(MessageHeader, "MessageThreadId").text = f"{random.randint(100000, 999999)}-{random.randint(1000, 9999)}"
-  etree.SubElement(MessageHeader, "MessageId").text = f"{random.randint(100000, 999999)}-{random.randint(1000, 9999)}"
- 
+    MessageHeader = etree.SubElement(NewReleaseMessage, "MessageHeader")
+    etree.SubElement(MessageHeader, "MessageThreadId").text = f"{random.randint(100000, 999999)}-{random.randint(1000, 9999)}"
+    etree.SubElement(MessageHeader, "MessageId").text = f"{random.randint(100000, 999999)}-{random.randint(1000, 9999)}"
 
-  # MessageSender
-  MessageSender = etree.SubElement(MessageHeader, "MessageSender")
-  etree.SubElement(MessageSender, "PartyId").text = "SenderPartyId" # Example Value
-  PartyName = etree.SubElement(MessageSender, "PartyName")
-  etree.SubElement(PartyName, "FullName").text = "Mkononi Limited"
- 
+    MessageSender = etree.SubElement(MessageHeader, "MessageSender")
+    etree.SubElement(MessageSender, "PartyId").text = "PA-DPIDA-2025040901-M"
+    PartyName = etree.SubElement(MessageSender, "PartyName")
+    etree.SubElement(PartyName, "FullName").text = "Mkononi Limited"
 
-  # MessageRecipient
-  MessageRecipient = etree.SubElement(MessageHeader, "MessageRecipient")
-  etree.SubElement(MessageRecipient, "PartyId").text = "PA-DPIDA-2025021301-D" # Example Value
-  PartyName = etree.SubElement(MessageRecipient, "PartyName")
-  etree.SubElement(PartyName, "FullName").text = "Boomplay" 
- 
+    MessageRecipient = etree.SubElement(MessageHeader, "MessageRecipient")
+    etree.SubElement(MessageRecipient, "PartyId").text = "PA-DPIDA-2025021301-D"
+    PartyName = etree.SubElement(MessageRecipient, "PartyName")
+    etree.SubElement(PartyName, "FullName").text = "Boomplay"
 
-  etree.SubElement(MessageHeader, "MessageCreatedDateTime").text = time.strftime('%Y-%m-%dT%H:%M:%SZ')
-  etree.SubElement(MessageHeader, "MessageControlType").text = "LiveMessage" # Example Value
- 
+    etree.SubElement(MessageHeader, "MessageCreatedDateTime").text = time.strftime('%Y-%m-%dT%H:%M:%SZ')
+    etree.SubElement(MessageHeader, "MessageControlType").text = "LiveMessage"
 
-  # ResourceList
-  ResourceList = etree.SubElement(NewReleaseMessage, "ResourceList")
-  SoundRecording = etree.SubElement(ResourceList, "SoundRecording")
-  etree.SubElement(SoundRecording, "SoundRecordingType").text = "MusicalWorkSoundRecording"
-  SoundRecordingId = etree.SubElement(SoundRecording, "SoundRecordingId")
-  etree.SubElement(SoundRecordingId, "ISRC").text = str(row['isrc_code'])
-  
-  # Modify ResourceReference to match the pattern
-  resource_reference = f"A{random.randint(1000, 9999)}"
-  etree.SubElement(SoundRecording, "ResourceReference").text = resource_reference
-  
-  ReferenceTitle = etree.SubElement(SoundRecording, "ReferenceTitle")
-  etree.SubElement(ReferenceTitle, "TitleText").text = str(row['track_titles'])
-  etree.SubElement(SoundRecording, "Duration").text = format_duration(row['duration'])
- 
+    ResourceList = etree.SubElement(NewReleaseMessage, "ResourceList")
+    SoundRecording = etree.SubElement(ResourceList, "SoundRecording")
+    etree.SubElement(SoundRecording, "SoundRecordingType").text = "MusicalWorkSoundRecording"
+    SoundRecordingId = etree.SubElement(SoundRecording, "SoundRecordingId")
+    etree.SubElement(SoundRecordingId, "ISRC").text = str(row['isrc_code'])
 
-  SoundRecordingDetailsByTerritory = etree.SubElement(SoundRecording, "SoundRecordingDetailsByTerritory")
-  etree.SubElement(SoundRecordingDetailsByTerritory, "TerritoryCode").text = "Worldwide"
-  Title = etree.SubElement(SoundRecordingDetailsByTerritory, "Title")
-  etree.SubElement(Title, "TitleText").text = str(row['track_titles'])
-  DisplayArtist = etree.SubElement(SoundRecordingDetailsByTerritory, "DisplayArtist")
-  PartyName = etree.SubElement(DisplayArtist, "PartyName")
-  etree.SubElement(PartyName, "FullName").text = str(row['primary_artists'])
-  etree.SubElement(DisplayArtist, "ArtistRole").text = "MainArtist"
-  PLine = etree.SubElement(SoundRecordingDetailsByTerritory, "PLine")
-  etree.SubElement(PLine, "Year").text = "2024" # Example Value
-  etree.SubElement(PLine, "PLineCompany").text = str(row['label'])
-  etree.SubElement(PLine, "PLineText").text = f"℗ 2024 {row['label']}"
-  etree.SubElement(SoundRecordingDetailsByTerritory, "ParentalWarningType").text = "NotExplicit" # Example Value
- 
-  # ReleaseList
-  ReleaseList = etree.SubElement(NewReleaseMessage, "ReleaseList")
-  Release = etree.SubElement(ReleaseList, "Release", attrib={"IsMainRelease": "true"})
-  ReleaseId = etree.SubElement(Release, "ReleaseId")
-  etree.SubElement(ReleaseId, "ICPN").text = str(row['upc_code'])
-  etree.SubElement(Release, "ReleaseReference").text = "ReleaseRef1" # Example Value
-  ReferenceTitle = etree.SubElement(Release, "ReferenceTitle")
-  etree.SubElement(ReferenceTitle, "TitleText").text = str(row['track_titles'])
-  ReleaseResourceReferenceList = etree.SubElement(Release, "ReleaseResourceReferenceList")
-  
+    resource_reference = f"A{random.randint(1000, 9999)}"
+    etree.SubElement(SoundRecording, "ResourceReference").text = resource_reference
 
-  # Modify ReleaseResourceReference to match the pattern
-  etree.SubElement(ReleaseResourceReferenceList, "ReleaseResourceReference").text = resource_reference
-  
-  ReleaseDetailsByTerritory = etree.SubElement(Release, "ReleaseDetailsByTerritory")
-  etree.SubElement(ReleaseDetailsByTerritory, "TerritoryCode").text = "Worldwide"
-  etree.SubElement(ReleaseDetailsByTerritory, "DisplayArtistName").text = str(row['primary_artists'])
-  etree.SubElement(ReleaseDetailsByTerritory, "LabelName").text = str(row['label'])
-  Title = etree.SubElement(ReleaseDetailsByTerritory, "Title")
-  etree.SubElement(Title, "TitleText").text = str(row['track_titles'])
-  DisplayArtist = etree.SubElement(ReleaseDetailsByTerritory, "DisplayArtist")
-  PartyName = etree.SubElement(DisplayArtist, "PartyName")
-  etree.SubElement(PartyName, "FullName").text = str(row['primary_artists'])
-  etree.SubElement(DisplayArtist, "ArtistRole").text = "MainArtist"
-  etree.SubElement(ReleaseDetailsByTerritory, "IsMultiArtistCompilation").text = "false"
-  etree.SubElement(ReleaseDetailsByTerritory, "ReleaseType").text = "Album"
-  etree.SubElement(ReleaseDetailsByTerritory, "ParentalWarningType").text = str(row.get('parental_advisory', 'NotExplicit'))
-  Genre = etree.SubElement(ReleaseDetailsByTerritory, "Genre")
-  etree.SubElement(Genre, "GenreText").text = str(row['genre'])
-  etree.SubElement(ReleaseDetailsByTerritory, "ReleaseDate").text = time.strftime('%Y-%m-%d')
- 
+    ReferenceTitle = etree.SubElement(SoundRecording, "ReferenceTitle")
+    etree.SubElement(ReferenceTitle, "TitleText").text = str(row['track_titles'])
+    etree.SubElement(SoundRecording, "Duration").text = format_duration(row['duration'])
 
-  etree.SubElement(Release, "Duration").text = format_duration(row['duration'])
-  PLine = etree.SubElement(Release, "PLine")
-  etree.SubElement(PLine, "Year").text = str(row.get('published_year', '2024')) 
-  etree.SubElement(PLine, "PLineCompany").text = str(row['label'])
-  etree.SubElement(PLine, "PLineText").text = f"℗ {row.get('published_year', '2024')} {row['label']}"
-  CLine = etree.SubElement(Release, "CLine")
-  etree.SubElement(CLine, "Year").text = str(row.get('copyright_year', '2024'))
-  etree.SubElement(CLine, "CLineCompany").text = str(row['label'])
-  etree.SubElement(CLine, "CLineText").text =  f"© {row.get('copyright_year', '2024')} {row['label']}"
-  etree.SubElement(Release, "GlobalOriginalReleaseDate").text = time.strftime('%Y-%m-%d')
- 
+    # RightsAgreementId - Adding a dummy one for now
+    RightsAgreementId = etree.SubElement(SoundRecording, "RightsAgreementId")
+    etree.SubElement(RightsAgreementId, "ProprietaryId", attrib={"Namespace": "Boomplay"}).text = f"{random.randint(100000, 999999)}"
 
-  # Write to XML file
-  tree = etree.ElementTree(NewReleaseMessage)
-  xml_filename = os.path.join(resource_folder, f"{row['upc_code']}_{row['track_titles'].replace(' ', '_')}_{BATCH_NUMBER}.xml")
-  tree.write(xml_filename, encoding='utf-8', xml_declaration=True, pretty_print=True)
- 
+    # Adding SoundRecordingDetailsByTerritory
+    SoundRecordingDetailsByTerritory = etree.SubElement(SoundRecording, "SoundRecordingDetailsByTerritory")
+    etree.SubElement(SoundRecordingDetailsByTerritory, "TerritoryCode").text = "Worldwide"
+    Title = etree.SubElement(SoundRecordingDetailsByTerritory, "Title")
+    etree.SubElement(Title, "TitleText").text = str(row['track_titles'])
+    DisplayArtist = etree.SubElement(SoundRecordingDetailsByTerritory, "DisplayArtist")
+    PartyName = etree.SubElement(DisplayArtist, "PartyName")
+    etree.SubElement(PartyName, "FullName").text = str(row['primary_artists'])
+    etree.SubElement(DisplayArtist, "ArtistRole").text = "MainArtist"
 
-  return xml_filename
+    # Adding Composer
+    if 'composer' in row:
+        for composer in row.get('composer', '').split(';'):
+            if composer:
+                Contributor = etree.SubElement(SoundRecordingDetailsByTerritory, "Contributor")
+                PartyName = etree.SubElement(Contributor, "PartyName")
+                etree.SubElement(PartyName, "FullName").text = composer.strip()
+                etree.SubElement(Contributor, "ContributorRole").text = "Composer"
+
+    # Adding Producer
+    if 'producer' in row:
+        for producer in row.get('producer', '').split(';'):
+            if producer:
+                Contributor = etree.SubElement(SoundRecordingDetailsByTerritory, "Contributor")
+                PartyName = etree.SubElement(Contributor, "PartyName")
+                etree.SubElement(PartyName, "FullName").text = producer.strip()
+                etree.SubElement(Contributor, "ContributorRole").text = "Producer"
+
+    PLine = etree.SubElement(SoundRecordingDetailsByTerritory, "PLine")
+    etree.SubElement(PLine, "Year").text = "2024"
+    etree.SubElement(PLine, "PLineCompany").text = "Mkononi Limited"
+    etree.SubElement(PLine, "PLineText").text = "℗ 2024 Mkononi Limited"
+    etree.SubElement(SoundRecordingDetailsByTerritory, "ParentalWarningType").text = "NotExplicit"
+
+    ReleaseList = etree.SubElement(NewReleaseMessage, "ReleaseList")
+    Release = etree.SubElement(ReleaseList, "Release", attrib={"IsMainRelease": "true"})
+    ReleaseId = etree.SubElement(Release, "ReleaseId")
+    etree.SubElement(ReleaseId, "ICPN").text = str(row['upc_code'])
+    etree.SubElement(Release, "ReleaseReference").text = "ReleaseRef1"
+
+    ReferenceTitle = etree.SubElement(Release, "ReferenceTitle")
+    etree.SubElement(ReferenceTitle, "TitleText").text = str(row['track_titles'])
+    ReleaseResourceReferenceList = etree.SubElement(Release, "ReleaseResourceReferenceList")
+    etree.SubElement(ReleaseResourceReferenceList, "ReleaseResourceReference").text = resource_reference
+
+    ReleaseDetailsByTerritory = etree.SubElement(Release, "ReleaseDetailsByTerritory")
+    etree.SubElement(ReleaseDetailsByTerritory, "TerritoryCode").text = "Worldwide"
+    etree.SubElement(ReleaseDetailsByTerritory, "DisplayArtistName").text = str(row['primary_artists'])
+    etree.SubElement(ReleaseDetailsByTerritory, "LabelName").text = "Mkononi Limited"
+    Title = etree.SubElement(ReleaseDetailsByTerritory, "Title")
+    etree.SubElement(Title, "TitleText").text = str(row['track_titles'])
+    DisplayArtist = etree.SubElement(ReleaseDetailsByTerritory, "DisplayArtist")
+    PartyName = etree.SubElement(DisplayArtist, "PartyName")
+    etree.SubElement(PartyName, "FullName").text = str(row['primary_artists'])
+    etree.SubElement(DisplayArtist, "ArtistRole").text = "MainArtist"
+    etree.SubElement(ReleaseDetailsByTerritory, "IsMultiArtistCompilation").text = "false"
+    etree.SubElement(ReleaseDetailsByTerritory, "ReleaseType").text = "Album"
+    etree.SubElement(ReleaseDetailsByTerritory, "ParentalWarningType").text = str(row.get('parental_advisory', 'NotExplicit'))
+    Genre = etree.SubElement(ReleaseDetailsByTerritory, "Genre")
+    etree.SubElement(Genre, "GenreText").text = str(row.get('genre', 'Gospel'))
+    if 'genre_code' in row:
+        etree.SubElement(Genre, "GenreCode").text = str(row['genre_code'])
+
+    etree.SubElement(ReleaseDetailsByTerritory, "ReleaseDate").text = time.strftime('%Y-%m-%d')
+
+    etree.SubElement(Release, "Duration").text = format_duration(row['duration'])
+    PLine = etree.SubElement(Release, "PLine")
+    etree.SubElement(PLine, "Year").text = str(row.get('published_year', '2024'))
+    etree.SubElement(PLine, "PLineCompany").text = "Mkononi Limited"
+    etree.SubElement(PLine, "PLineText").text = f"℗ {row.get('published_year', '2024')} Mkononi Limited"
+    CLine = etree.SubElement(Release, "CLine")
+    etree.SubElement(CLine, "Year").text = str(row.get('copyright_year', '2024'))
+    etree.SubElement(CLine, "CLineCompany").text = "Mkononi Limited"
+    etree.SubElement(CLine, "CLineText").text = f"© {row.get('copyright_year', '2024')} Mkononi Limited"
+    etree.SubElement(Release, "GlobalOriginalReleaseDate").text = time.strftime('%Y-%m-%d')
+
+    tree = etree.ElementTree(NewReleaseMessage)
+    xml_filename = os.path.join(resource_folder, f"{row['upc_code']}_{row['track_titles'].replace(' ', '_')}_{time.strftime('%Y%m%d')}.xml")
+    tree.write(xml_filename, encoding='utf-8', xml_declaration=True, pretty_print=True)
+
+    return xml_filename
+ 
 
 def validate_ddex_xml(xml_file, schema_file):
-    """
-    Validates the generated XML file against a specified DDEX schema file.
-    Handles both local file paths and URLs for the schema file.
-    """
     try:
         # Determine if schema_file is a URL or a local path
         if schema_file.startswith('http://') or schema_file.startswith('https://'):
@@ -308,7 +306,6 @@ def validate_ddex_xml(xml_file, schema_file):
 
 
 def ensure_ftp_directory(ftp, directory):
-    """Ensure the directory exists on the FTP server, create if missing."""
     try:
         ftp.cwd(directory)
     except Exception:
@@ -321,7 +318,6 @@ def ensure_ftp_directory(ftp, directory):
 
 
 def upload_to_ftp(file_path, upc_code, max_retries=3):
-    """Upload a file to the FTP server, retrying if necessary."""
     attempt = 0
     while attempt < max_retries:
         try:
