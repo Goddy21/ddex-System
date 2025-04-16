@@ -18,8 +18,8 @@ import shutil
 import time
 
 # Import processing function from ddex.py
-from ddex import process_and_upload  # Ensure this function supports project names
-CONFIG_FILE = "config.txt"  # Store the last used directory here
+from ddex import process_and_upload  
+CONFIG_FILE = "config.txt"  
 class DDEXUploaderApp(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(orientation='vertical', padding=20, spacing=15, **kwargs)
@@ -29,9 +29,9 @@ class DDEXUploaderApp(BoxLayout):
             if os.path.exists(CONFIG_FILE):
                 with open(CONFIG_FILE, "r") as f:
                     directory = f.read().strip()
-                    if os.path.exists(directory):  # Ensure it still exists
+                    if os.path.exists(directory):  
                         return directory
-            return os.path.expanduser("~")  # Default to user home directory
+            return os.path.expanduser("~")  
 
 
         # Define Colors (Dark Theme)
@@ -40,7 +40,7 @@ class DDEXUploaderApp(BoxLayout):
         self.bg_color = get_color_from_hex("#2980B9") 
         self.text_color = get_color_from_hex("#ECF0F1")  
 
-                # Background Styling
+        # Background Styling
         with self.canvas.before:
             Color(*self.bg_color)
             self.rect = RoundedRectangle(pos=self.pos, size=self.size, radius=[0])
@@ -64,8 +64,8 @@ class DDEXUploaderApp(BoxLayout):
             hint_text="Enter Project Name",
             multiline=False,
             size_hint_y=None,
-            height=35,
-            font_size=18,
+            height=40,
+            font_size=20,
             background_color=(1, 1, 1, 1),
             foreground_color=(0, 0, 0, 1)
         )
@@ -76,7 +76,7 @@ class DDEXUploaderApp(BoxLayout):
             path=load_last_directory(),
             filters=["*.xlsx", "*.csv", "*.xml", "*.mp3", "*.wav", "*.jpg", "*.png"],
             show_hidden=False,
-            size_hint_y=0.35
+            size_hint_y=0.5
         )
         self.add_widget(self.file_chooser)
 
@@ -90,7 +90,7 @@ class DDEXUploaderApp(BoxLayout):
             height=150,
             background_color=(0, 0, 0, 0.7),
             foreground_color=(1, 1, 1, 1),
-            font_size=14,
+            font_size=20,
             padding=[10, 10],
             font_name="C:/Windows/Fonts/seguiemj.ttf" 
         )
@@ -123,7 +123,7 @@ class DDEXUploaderApp(BoxLayout):
             font_name="C:/Windows/Fonts/seguiemj.ttf",
             background_color=self.primary_color,
             size_hint_x=0.5,
-            font_size=18,
+            font_size=20,
             bold=True,
             background_normal='',
             background_down='',
@@ -174,9 +174,10 @@ class DDEXUploaderApp(BoxLayout):
             def process_task():
                 Clock.schedule_once(lambda dt: self.update_log("🚀 Starting processing...\n"), 0)
 
-                success, processed_tracks = process_and_upload(project_name) 
+                success, processed_tracks = process_and_upload(project_name,
+                        progress_callback=lambda msg: Clock.schedule_once(lambda dt: self.update_log(msg))) 
                 time.sleep(1) 
-                
+                    
                 if success:
                     Clock.schedule_once(lambda dt: self.update_log("\n✅ Processing completed successfully!"), 0)
 
@@ -192,7 +193,7 @@ class DDEXUploaderApp(BoxLayout):
                             source_file = os.path.join(os.path.dirname(file_path), f"{track_name}{ext}")
                             if os.path.exists(source_file):
                                 shutil.move(source_file, os.path.join(upc_folder, os.path.basename(source_file)))
-                    
+                        
                     Clock.schedule_once(lambda dt: self.show_results(batch_folder), 0)
 
                 else:
