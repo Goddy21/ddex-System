@@ -150,7 +150,7 @@ def create_ddex_xml(row, image_filename):
     etree.SubElement(MessageHeader, "MessageId").text = f"{random.randint(100000, 999999)}-{random.randint(1000, 9999)}"
 
     MessageSender = etree.SubElement(MessageHeader, "MessageSender")
-    etree.SubElement(MessageSender, "PartyId").text = "PA-DPIDA-2025040901-M"
+    etree.SubElement(MessageSender, "PartyId").text = "PA-DPIDA-2025021301-O"
     PartyName = etree.SubElement(MessageSender, "PartyName")
     etree.SubElement(PartyName, "FullName").text = "Mkononi Limited"
 

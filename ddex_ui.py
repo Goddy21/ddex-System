@@ -16,6 +16,9 @@ import datetime
 from kivy.graphics import Color, Line, RoundedRectangle
 import shutil
 import time
+import tkinter as tk
+from tkinter import filedialog
+from kivy.core.window import Window
 
 # Import processing function from ddex.py
 from ddex import process_and_upload  
@@ -32,6 +35,7 @@ class DDEXUploaderApp(BoxLayout):
                     if os.path.exists(directory):  
                         return directory
             return os.path.expanduser("~")  
+        self.load_last_directory = load_last_directory
 
 
         # Define Colors (Dark Theme)
@@ -48,7 +52,7 @@ class DDEXUploaderApp(BoxLayout):
 
         # Title Label
         self.add_widget(Label(
-            text="📂 [b]DDEX File Uploader[/b]",
+            text="📂 [b]Mkononi DDEX File Uploader[/b]",
             markup=True,
             font_size=36,
             bold=True,
@@ -71,14 +75,29 @@ class DDEXUploaderApp(BoxLayout):
         )
         self.add_widget(self.project_name_input)
 
-        # File Chooser
-        self.file_chooser = FileChooserIconView(
-            path=load_last_directory(),
-            filters=["*.xlsx", "*.csv", "*.xml", "*.mp3", "*.wav", "*.jpg", "*.png"],
-            show_hidden=False,
-            size_hint_y=0.5
+
+        # File Selection Button (Replaces FileChooserIconView)
+        self.file_path = ""  # Store the selected file path
+        self.select_file_button = Button(
+            text="Select File",
+            size_hint_y=None,
+            height=40,
+            font_size=20,
+            background_color=self.primary_color,
+            color=self.text_color
         )
-        self.add_widget(self.file_chooser)
+        self.select_file_button.bind(on_press=self.open_file_dialog)
+        self.add_widget(self.select_file_button)
+
+        # Label to display selected file
+        self.selected_file_label = Label(
+            text="No file selected",
+            size_hint_y=None,
+            height=30,
+            color=self.text_color,
+            font_size=20
+        )
+        self.add_widget(self.selected_file_label)
 
         # Log Display
         self.log_scroll = ScrollView(size_hint=(1, 0.25), do_scroll_x=False)
@@ -90,8 +109,8 @@ class DDEXUploaderApp(BoxLayout):
             height=150,
             background_color=(0, 0, 0, 0.7),
             foreground_color=(1, 1, 1, 1),
-            font_size=20,
-            padding=[10, 10],
+            font_size=16,
+            padding=[20, 20],
             font_name="C:/Windows/Fonts/seguiemj.ttf" 
         )
 
@@ -129,7 +148,7 @@ class DDEXUploaderApp(BoxLayout):
             background_down='',
             color=self.text_color
         )
-        self.process_button.bind(on_press=self.start_processing)
+        self.process_button.bind(on_enter=self.set_hand_cursor, on_leave=self.set_arrow_cursor, on_press=self.start_processing)
         button_layout.add_widget(self.process_button)
 
         self.add_widget(button_layout)
@@ -137,16 +156,44 @@ class DDEXUploaderApp(BoxLayout):
         # Progress Bar
         self.progress_bar = ProgressBar(max=100, size_hint_y=0.05)
         self.add_widget(self.progress_bar)
-
+    def set_hand_cursor():
+        Window.set_system_cursor('hand')
+    def set_arrow_cursor():
+        Window.set_system_cursor('arrow')
     def on_size(self, *args):
         self.border.rectangle = (0, 0, self.log_output.width, self.log_output.height)
+
+    def open_file_dialog(self, instance):
+            """Open the native file dialog using tkinter."""
+            root = tk.Tk()
+            root.withdraw()  # Hide the main window
+
+            file_path = filedialog.askopenfilename(
+                initialdir=self.load_last_directory(),
+                title="Select a file",
+                filetypes=(
+                    ("Excel files", "*.xlsx"),
+                    ("CSV files", "*.csv"),
+                    ("XML files", "*.xml"),
+                    ("Audio files", "*.mp3;*.wav"),
+                    ("Image files", "*.jpg;*.png"),
+                    ("All files", "*.*"),
+                ),
+            )
+
+            if file_path:
+                self.file_path = file_path
+                self.selected_file_label.text = f"Selected: {os.path.basename(file_path)}"
+                self.save_last_directory(os.path.dirname(file_path))  # Save the directory
+            else:
+                self.selected_file_label.text = "No file selected"
     def save_last_directory(self, directory):
         """Save the last used directory to a file."""
         with open(CONFIG_FILE, "w") as f:
             f.write(directory)
     def start_processing(self, instance):
         project_name = self.project_name_input.text.strip()
-        selected_file = self.file_chooser.selection
+        selected_file = self.file_path
 
         if not project_name:
             self.update_log("\n❌ Project name is required!")
